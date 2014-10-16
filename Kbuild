@@ -1,0 +1,211 @@
+MODNAME := wlan
+
+BCM_DIR :=	bcmdhd
+BCM_INC_DIR :=	$(BCM_DIR)/include
+BCM_SRC_DIR :=	$(BCM_DIR)
+
+BCM_INC := 	-I$(WLAN_ROOT)/$(BCM_INC_DIR) \
+		-I$(WLAN_ROOT)/$(BCM_SRC_DIR)
+
+BCM_OBJS := $(BCM_SRC_DIR)/bcmsdh.o \
+		$(BCM_SRC_DIR)/bcmsdh_linux.o \
+		$(BCM_SRC_DIR)/bcmsdh_sdmmc.o \
+		$(BCM_SRC_DIR)/bcmsdh_sdmmc_linux.o \
+		$(BCM_SRC_DIR)/dhd_cdc.o \
+		$(BCM_SRC_DIR)/dhd_cfg80211.o \
+		$(BCM_SRC_DIR)/dhd_common.o \
+		$(BCM_SRC_DIR)/dhd_custom_gpio.o \
+		$(BCM_SRC_DIR)/dhd_ip.o \
+		$(BCM_SRC_DIR)/dhd_linux.o \
+		$(BCM_SRC_DIR)/dhd_linux_sched.o \
+		$(BCM_SRC_DIR)/dhd_sdio.o \
+		$(BCM_SRC_DIR)/dhd_pno.o \
+		$(BCM_SRC_DIR)/dhd_wlfc.o \
+		$(BCM_SRC_DIR)/aiutils.o \
+		$(BCM_SRC_DIR)/bcmevent.o \
+		$(BCM_SRC_DIR)/bcmutils.o \
+		$(BCM_SRC_DIR)/bcmwifi_channels.o \
+		$(BCM_SRC_DIR)/hndpmu.o \
+		$(BCM_SRC_DIR)/linux_osl.o \
+		$(BCM_SRC_DIR)/sbutils.o \
+		$(BCM_SRC_DIR)/siutils.o \
+		$(BCM_SRC_DIR)/wldev_common.o \
+		$(BCM_SRC_DIR)/wl_android.o \
+		$(BCM_SRC_DIR)/wl_cfg80211.o \
+		$(BCM_SRC_DIR)/wl_cfgp2p.o \
+		$(BCM_SRC_DIR)/wl_linux_mon.o
+
+LINUX_INC :=	-Iinclude/linux
+
+INCS :=		$(BCM_INC)
+
+OBJS :=		$(BCM_OBJS)
+
+EXTRA_CFLAGS += $(INCS)
+
+#####################
+# SDIO Basic feature
+#####################
+DHDCFLAGS = -Wall -Wstrict-prototypes -Dlinux -DLINUX -DBCMDRIVER             \
+        -DBCMDONGLEHOST -DUNRELEASEDCHIP -DBCMDMA32 -DBCMFILEIMAGE            \
+        -DDHDTHREAD -DBDC -DOOB_INTR_ONLY                                     \
+        -DDHD_BCMEVENTS -DSHOW_EVENTS -DBCMDBG                                \
+        -DMMC_SDIO_ABORT -DBCMSDIO -DBCMLXSDMMC -DBCMPLATFORM_BUS -DWLP2P     \
+        -DWIFI_ACT_FRAME -DARP_OFFLOAD_SUPPORT          \
+        -DKEEP_ALIVE -DCSCAN -DPKT_FILTER_SUPPORT                             \
+        -DEMBEDDED_PLATFORM -DPNO_SUPPORT
+
+####################
+# Common feature
+####################
+DHDCFLAGS += -DCUSTOMER_HW2
+DHDCFLAGS += -DWL_CFG80211 -DROAM_ENABLE -DVSDB -DPROP_TXSTATUS	\
+	 -DWL_SUPPORT_AUTO_CHANNEL -DSUPPORT_HIDDEN_AP 	\
+	 -DSUPPORT_AMPDU_MPDU_CMD	-DSUPPORT_PM2_ONLY	\
+	 -DWL_ENABLE_P2P_IF -DWL_CFG80211_STA_EVENT -DWL_IFACE_COMB_NUM_CHANNELS
+
+# Debug
+DHDCFLAGS += -DSIMPLE_MAC_PRINT
+DHDCFLAGS += -DDEBUGFS_CFG80211
+# Print out kernel panic point of file and line info when assertion happened
+DHDCFLAGS += -DBCMASSERT_LOG
+
+# Wi-Fi Direct
+DHDCFLAGS += -DWL_CFG80211_VSDB_PRIORITIZE_SCAN_REQUEST
+DHDCFLAGS += -DWL_SCB_TIMEOUT=10
+
+# For TDLS tear down inactive time 10 sec
+DHDCFLAGS += -DCUSTOM_TDLS_IDLE_MODE_SETTING=10000
+# for TDLS RSSI HIGH for establishing TDLS link
+DHDCFLAGS += -DCUSTOM_TDLS_RSSI_THRESHOLD_HIGH=-80
+# for TDLS RSSI HIGH for tearing down TDLS link
+DHDCFLAGS += -DCUSTOM_TDLS_RSSI_THRESHOLD_LOW=-85
+
+# Roaming
+DHDCFLAGS += -DROAM_AP_ENV_DETECTION
+
+# CCX
+ifeq ($(CONFIG_BRCM_CCX),y)
+  DHDCFLAGS += -DBCMCCX
+endif
+
+
+# For Scan result patch
+DHDCFLAGS += -DESCAN_RESULT_PATCH
+DHDCFLAGS += -DDUAL_ESCAN_RESULT_BUFFER
+
+# For Static Buffer
+ifeq ($(CONFIG_BROADCOM_WIFI_RESERVED_MEM),y)
+  DHDCFLAGS += -DCONFIG_DHD_USE_STATIC_BUF
+  DHDCFLAGS += -DENHANCED_STATIC_BUF
+  DHDCFLAGS += -DSTATIC_WL_PRIV_STRUCT
+endif
+
+# DTIM listen interval in suspend mode(0 means follow AP's DTIM period)
+DHDCFLAGS += -DCUSTOM_SUSPEND_BCN_LI_DTIM=3
+
+# Ioctl timeout 5000ms
+DHDCFLAGS += -DIOCTL_RESP_TIMEOUT=5000
+
+# DPC priority
+#DHDCFLAGS += -DCUSTOM_DPC_PRIO_SETTING=98
+
+# Priority mismatch fix with kernel stack
+DHDCFLAGS += -DPKTPRIO_OVERRIDE
+
+# Config PM Control
+DHDCFLAGS += -DCONFIG_CONTROL_PM
+
+# idle count
+DHDCFLAGS += -DDHD_USE_IDLECOUNT
+
+# Fasten connection
+DHDCFLAGS += -DUSE_INITIAL_SHORT_DWELL_TIME
+
+# custom specific value define
+# For special PNO Event keep wake lock for 10sec
+DHDCFLAGS += -DCUSTOM_PNO_EVENT_LOCK_xTIME=10
+# set keep alive period
+DHDCFLAGS += -DCUSTOM_KEEP_ALIVE_SETTING=55000
+DHDCFLAGS += -DCUSTOM_ROAM_TRIGGER_SETTING=-75
+DHDCFLAGS += -DCUSTOM_ROAM_DELTA_SETTING=10
+
+ifeq ($(CONFIG_BCMDHD_INSMOD_NO_FW_LOAD),y)
+ DHDCFLAGS += -DENABLE_INSMOD_NO_FW_LOAD
+endif
+
+# For WiFi card detection
+DHDCFLAGS += -DCONFIG_WIFI_CONTROL_FUNC
+
+# read custom mac address function
+DHDCFLAGS += -DGET_CUSTOM_MAC_ENABLE
+
+# WAPI
+DHDCFLAGS += -DBCMWAPI_WPI -DBCMWAPI_WAI
+
+#########################
+# Chip dependent feature
+#########################
+
+ifneq ($(CONFIG_BCM4339),)
+  DHDCFLAGS += -DBCM4339_CHIP -DHW_OOB
+  DHDCFLAGS += -DUSE_CID_CHECK
+  DHDCFLAGS += -DENABLE_BCN_LI_BCN_WAKEUP
+  DHDCFLAGS += -DUSE_SDIOFIFO_IOVAR
+
+  # tput enhancement
+  DHDCFLAGS += -DCUSTOM_GLOM_SETTING=8 -DCUSTOM_RXCHAIN=1
+  DHDCFLAGS += -DUSE_DYNAMIC_F2_BLKSIZE -DDYNAMIC_F2_BLKSIZE_FOR_NONLEGACY=128
+  DHDCFLAGS += -DBCMSDIOH_TXGLOM -DCUSTOM_TXGLOM=1 -DBCMSDIOH_TXGLOM_HIGHSPEED
+  DHDCFLAGS += -DCUSTOM_SDIO_F2_BLKSIZE=512
+  DHDCFLAGS += -DDHDTCPACK_SUPPRESS
+  DHDCFLAGS += -DUSE_WL_TXBF
+  DHDCFLAGS += -DUSE_WL_FRAMEBURST
+  DHDCFLAGS += -DRXFRAME_THREAD
+  DHDCFLAGS += -DREPEAT_READFRAME
+  DHDCFLAGS += -DCUSTOM_AMPDU_BA_WSIZE=64
+  DHDCFLAGS += -DCUSTOM_DPC_CPUCORE=0
+  DHDCFLAGS += -DPROP_TXSTATUS_VSDB
+ifeq ($(CONFIG_ARCH_MSM8974),y)
+  DHDCFLAGS += -DCUSTOM_DEF_TXGLOM_SIZE=32 -DDHD_TXBOUND=32
+endif
+  DHDCFLAGS += -DENABLE_ADAPTIVE_SCHED
+  DHDCFLAGS += -DCUSTOM_MAX_TXGLOM_SIZE=32
+
+  DHDCFLAGS += -DWL11U
+  DHDCFLAGS += -DWLTDLS
+  DHDCFLAGS += -DWLFBT
+  DHDCFLAGS += -DDHD_ENABLE_LPC
+  DHDCFLAGS += -DSUPPORT_LTECX
+  DHDCFLAGS += -DSUPPORT_WL_TXPOWER
+# DHDCFLAGS += -DSUPPORT_2G_VHT
+  DHDCFLAGS += -DDISABLE_WL_FRAMEBURST_SOFTAP
+endif
+
+ifneq ($(CONFIG_SEMC_WLAN_BAND),)
+  DHDCFLAGS += -DSEMC_WLAN_BAND=$(CONFIG_SEMC_WLAN_BAND)
+endif
+
+ifneq ($(CONFIG_SOMC_WLAN_BCN_TIMEOUT),)
+  DHDCFLAGS += -DSOMC_WLAN_BCN_TIMEOUT=$(CONFIG_SOMC_WLAN_BCN_TIMEOUT)
+endif
+
+DHDCFLAGS += -DSOMC_MAX_ASSOC_NUM=10
+
+DHDCFLAGS += -DSOMC_MIRACAST_STATISTICS
+
+# Default Listen Interval in Beacons
+ifneq ($(CONFIG_SOMC_WLAN_LISTEN_INTERVAL),)
+  DHDCFLAGS += -DCUSTOM_LISTEN_INTERVAL=$(CONFIG_SOMC_WLAN_LISTEN_INTERVAL)
+endif
+
+#EXTRA_LDFLAGS += --strip-debug
+EXTRA_CFLAGS += -DDHD_DEBUG
+EXTRA_CFLAGS += -DSRCBASE=\"$(src)\"
+
+KBUILD_CPPFLAGS += $(DHDCFLAGS)
+
+# Module information used by KBuild framework
+obj-$(CONFIG_BCMDHD) += $(MODNAME).o
+
+$(MODNAME)-y := $(OBJS)
